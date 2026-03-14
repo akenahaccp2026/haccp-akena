@@ -8,11 +8,49 @@
 <meta name="apple-mobile-web-app-title" content="HACCP Pro">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0a1628">
+<script>
+// Manifest PWA inline — nécessaire pour l'installation sur écran d'accueil
+const _manifest = {
+  name: 'HACCP Pro · Akena Hotel',
+  short_name: 'HACCP Pro',
+  description: 'Gestion HACCP certifiée — Akena Hotels',
+  start_url: './',
+  display: 'standalone',
+  orientation: 'any',
+  background_color: '#0a1628',
+  theme_color: '#0a1628',
+  icons: [
+    { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='32' fill='%23059669'/%3E%3Ctext y='140' x='20' font-size='140' font-family='serif'%3E🌡%3C/text%3E%3C/svg%3E", sizes:'192x192', type:'image/svg+xml' },
+    { src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='80' fill='%23059669'/%3E%3Ctext y='380' x='50' font-size='380' font-family='serif'%3E🌡%3C/text%3E%3C/svg%3E", sizes:'512x512', type:'image/svg+xml' }
+  ]
+};
+const _mBlob = new Blob([JSON.stringify(_manifest)], {type:'application/json'});
+const _mUrl  = URL.createObjectURL(_mBlob);
+const _mLink = document.createElement('link');
+_mLink.rel = 'manifest'; _mLink.href = _mUrl;
+document.head.appendChild(_mLink);
+</script>
 <title>HACCP Pro · Akena Hotel v8</title>
 <!-- localForage pour IndexedDB avec fallback localStorage -->
-<!-- SheetJS pour import/export Excel -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- SheetJS pour import/export Excel — chargé en différé sans bloquer -->
+<script>
+(function(){
+  var s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+  s.async=true; s.defer=true;
+  s.onerror=function(){ console.warn('[HACCP] SheetJS indisponible (hors ligne) — export Excel désactivé'); };
+  document.head.appendChild(s);
+})();
+</script>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Outfit:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Fallback système si Google Fonts indisponible (hors ligne) */
+:root {
+  --font: 'Outfit', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --mono: 'DM Mono', 'Courier New', monospace;
+  --display: 'Syne', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+</style>
 <style>
 :root{
   --g:#059669;--gd:#047857;--gl:#10b981;--gxl:#d1fae5;--gbg:#f0fdf4;
@@ -79,7 +117,7 @@ body{font-family:var(--font);background:#f1f5f9;color:var(--n900);-webkit-font-s
 .hs-nm{font-size:12px;font-weight:600;color:white;display:flex;align-items:center;justify-content:space-between;}
 .sb-nav{flex:1;padding:8px 0;}
 .nav-grp{font-size:9px;color:rgba(255,255,255,.18);letter-spacing:.14em;text-transform:uppercase;padding:11px 17px 3px;font-weight:700;}
-.ni{display:flex;align-items:center;gap:9px;padding:9px 17px;cursor:pointer;color:rgba(255,255,255,.42);font-size:13px;font-weight:500;transition:all .15s;border-radius:0 8px 8px 0;margin-right:9px;position:relative;}
+.ni{display:flex;align-items:center;gap:9px;padding:11px 17px;cursor:pointer;color:rgba(255,255,255,.42);font-size:13px;font-weight:500;transition:all .15s;border-radius:0 8px 8px 0;margin-right:9px;position:relative;min-height:44px;-webkit-tap-highlight-color:transparent;}
 .ni svg{width:15px;height:15px;flex-shrink:0;}
 .ni:hover{color:rgba(255,255,255,.82);background:rgba(255,255,255,.05);padding-left:21px;}
 .ni.active{color:white;background:rgba(16,185,129,.14);border-left:3px solid #34d399;padding-left:14px;}
@@ -273,6 +311,9 @@ tr:last-child td{border-bottom:none;}tr:hover td{background:var(--n50);}
 /* ── CHANGE PASSWORD ── */
 #mChangePwd .modal{max-width:420px;}
 
+/* ── OFFLINE BANNER ── */
+#offlineBanner{display:none;position:sticky;top:54px;z-index:99;background:linear-gradient(90deg,#78350f,#92400e);color:#fde68a;font-size:12px;font-weight:700;text-align:center;padding:7px 16px;letter-spacing:.3px;border-bottom:1px solid #fcd34d;}
+#offlineBanner.show{display:block;}
 /* ── ANIMATIONS ── */
 @keyframes fin{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.5;}}
@@ -344,6 +385,60 @@ tr:last-child td{border-bottom:none;}tr:hover td{background:var(--n50);}
 @media(display-mode:standalone){
   .topbar{padding-top:env(safe-area-inset-top);}
   body{padding-bottom:env(safe-area-inset-bottom);}
+}
+
+/* ── TABLETTE PORTRAIT (768–900px) ───────────────── */
+@media(min-width:600px) and (max-width:900px){
+  :root{ --sw:260px; }
+  /* Sidebar toujours accessible via overlay sur tablette */
+  .sb{ transform:translateX(-100%); }
+  .sb.open{ transform:translateX(0); box-shadow:6px 0 40px rgba(0,0,0,.5); }
+  .main{ margin-left:0; }
+  .mob-btn{ display:flex!important; }
+  /* Grilles adaptées tablette */
+  .sg4{ grid-template-columns:repeat(2,1fr); }
+  .sg3{ grid-template-columns:repeat(3,1fr); }
+  .sg2{ grid-template-columns:1fr 1fr; }
+  .eq-grid{ grid-template-columns:repeat(3,1fr); }
+  .tslots{ grid-template-columns:repeat(3,1fr); }
+  /* Score banner horizontal sur tablette */
+  .score-banner{ flex-direction:row; align-items:center; }
+  .kpis{ grid-template-columns:repeat(4,1fr); }
+  /* Topbar */
+  .topbar{ height:56px; padding:0 14px; gap:8px; }
+  .tb-btn{ padding:6px 11px; font-size:12px; }
+  .tb-btn .btn-lbl{ display:none; } /* cacher labels texte, garder icônes */
+  #cloudBadge{ flex-shrink:0; white-space:nowrap; }
+  /* Content : padding confortable */
+  .content{ padding:16px 18px; }
+  /* Cards */
+  .card-hdr{ flex-wrap:wrap; gap:6px; }
+  /* Tables : scroll horizontal */
+  .tbl{ overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  /* Modales : centrer sur tablette */
+  .modal-overlay{ align-items:center; padding:24px; }
+  .modal{ max-width:580px; border-radius:16px!important; position:relative!important; bottom:auto!important; max-height:88vh; }
+  /* Login : afficher les deux colonnes sur tablette paysage */
+  .login-left{ display:flex; padding:40px; }
+  .login-title{ font-size:34px; }
+  .login-right{ width:380px; }
+  .fr{ grid-template-columns:1fr 1fr; }
+  /* Tabs scrollables */
+  .tabs{ flex-wrap:wrap; }
+  /* Bottom nav visible sur tablette aussi */
+  #bottomNav{ display:block!important; }
+  .main{ padding-bottom:60px; }
+}
+
+/* ── TABLETTE PAYSAGE (900–1200px) ───────────────── */
+@media(min-width:900px) and (max-width:1200px){
+  :root{ --sw:240px; }
+  .sb{ width:var(--sw); }
+  .main{ margin-left:var(--sw); }
+  .sg4{ grid-template-columns:repeat(4,1fr); }
+  .content{ padding:16px 18px; }
+  .kpis{ grid-template-columns:repeat(4,1fr); }
+  .topbar{ padding:0 16px; }
 }
 </style>
 </head>
@@ -426,9 +521,36 @@ tr:last-child td{border-bottom:none;}tr:hover td{background:var(--n50);}
         <button class="tb-btn tb-pdf" onclick="genPDF()" id="btnPDF" style="display:none">📄 Rapport</button>
       </div>
     </div>
+    <div id="offlineBanner">📡 Mode hors ligne — Vos données sont sauvegardées localement. La synchronisation reprendra automatiquement.</div>
     <div class="content" id="content"><div style="text-align:center;padding:60px;color:var(--n400)"><div class="loading"></div><br><br>Chargement…</div></div>
   </div>
 </div>
+
+<!-- ══════════════════════════════════════ BOTTOM NAV TABLETTE/MOBILE ══════════════════════ -->
+<nav id="bottomNav" style="display:none;position:fixed;bottom:0;left:0;right:0;z-index:250;background:white;border-top:1px solid #e5e7eb;padding:4px 0 calc(4px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,.1);">
+  <div style="display:flex;justify-content:space-around;align-items:stretch">
+    <button onclick="goMod('dashboard')" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 4px;border:none;background:none;cursor:pointer;color:var(--n500);font-size:9px;font-weight:700;font-family:var(--font);letter-spacing:.04em;min-height:52px;-webkit-tap-highlight-color:transparent">
+      <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+      Accueil
+    </button>
+    <button onclick="goMod('temperatures')" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 4px;border:none;background:none;cursor:pointer;color:var(--n500);font-size:9px;font-weight:700;font-family:var(--font);letter-spacing:.04em;min-height:52px;-webkit-tap-highlight-color:transparent">
+      <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      Températures
+    </button>
+    <button onclick="goMod('nettoyage')" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 4px;border:none;background:none;cursor:pointer;color:var(--n500);font-size:9px;font-weight:700;font-family:var(--font);letter-spacing:.04em;min-height:52px;-webkit-tap-highlight-color:transparent">
+      <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+      Nettoyage
+    </button>
+    <button onclick="goMod('nc')" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 4px;border:none;background:none;cursor:pointer;color:var(--n500);font-size:9px;font-weight:700;font-family:var(--font);letter-spacing:.04em;min-height:52px;-webkit-tap-highlight-color:transparent">
+      <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+      NC
+    </button>
+    <button onclick="toggleSb()" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:6px 4px;border:none;background:none;cursor:pointer;color:var(--n500);font-size:9px;font-weight:700;font-family:var(--font);letter-spacing:.04em;min-height:52px;-webkit-tap-highlight-color:transparent">
+      <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      Menu
+    </button>
+  </div>
+</nav>
 
 <!-- ══════════════════════════════════════ PHOTO VIEWER ══════════════════════════════ -->
 <div class="pv" id="pv"><img id="pvImg" src=""><button class="pv-close" onclick="closePV()">×</button></div>
@@ -915,12 +1037,12 @@ async function _sbSet(hotel, dataKey, val) {
   try {
     const r = await fetch(`${SB_URL}/rest/v1/${SB_TABLE}`, {
       method: 'POST',
-      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal' },
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Content-Type': 'application/json', 'Prefer': 'resolution=merge-duplicates,return=minimal', 'x-upsert': 'true' },
       body: JSON.stringify({ hotel, data_key: dataKey, data_value: val, updated_at: new Date().toISOString() })
     });
-    _cloudOnline = r.ok;
+    _cloudOnline = r.ok || r.status === 409;
     _updateCloudBadge();
-    return r.ok;
+    return r.ok || r.status === 409;
   } catch(e) { _cloudOnline = false; _updateCloudBadge(); return false; }
 }
 
@@ -1054,44 +1176,56 @@ async function _flushSyncQueue() {
   _syncRunning = false;
 }
 
-window.addEventListener('online',  () => { _updateCloudBadge(); _flushSyncQueue(); });
-window.addEventListener('offline', () => { _cloudOnline=false; _updateCloudBadge(); });
+window.addEventListener('online',  () => {
+  _updateCloudBadge();
+  const b = document.getElementById('offlineBanner');
+  if(b) b.classList.remove('show');
+  // Retenter la connexion cloud dès que le réseau revient
+  setTimeout(() => _testCloudConnection().then(() => _flushSyncQueue()), 1500);
+});
+window.addEventListener('offline', () => {
+  _cloudOnline=false;
+  _updateCloudBadge();
+  const b = document.getElementById('offlineBanner');
+  if(b) b.classList.add('show');
+});
 
 function _updateCloudBadge() {
   const el = document.getElementById('cloudBadge');
   if (!el) return;
   if (!_sbEnabled()) {
     el.innerHTML = '💾 Local';
-    el.style.background = 'rgba(100,116,139,.15)';
-    el.style.color = '#94a3b8';
-    el.style.border = '1px solid #475569';
-    el.title = 'Stockage local — Supabase non configuré';
+    el.style.cssText = 'font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:default;transition:all .3s;background:rgba(100,116,139,.15);color:#94a3b8;border:1px solid #475569;display:inline-block';
+    el.title = 'Stockage local uniquement — Supabase non configuré';
   } else if (_cloudOnline) {
     el.innerHTML = '☁️ Cloud';
-    el.style.background = 'rgba(16,185,129,.15)';
-    el.style.color = '#34d399';
-    el.style.border = '1px solid #6ee7b7';
+    el.style.cssText = 'font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:default;transition:all .3s;background:rgba(16,185,129,.15);color:#34d399;border:1px solid #6ee7b7;display:inline-block';
     el.title = 'Synchronisé avec Supabase';
   } else {
+    // Hors ligne : toujours visible, jamais caché
     el.innerHTML = '📡 Hors ligne';
-    el.style.background = 'rgba(245,158,11,.15)';
-    el.style.color = '#fbbf24';
-    el.style.border = '1px solid #fcd34d';
-    el.title = 'Pas de connexion cloud — données locales uniquement';
+    el.style.cssText = 'font-size:11px;font-weight:700;padding:4px 10px;border-radius:6px;cursor:default;transition:all .3s;background:rgba(245,158,11,.15);color:#fbbf24;border:1px solid #fcd34d;display:inline-block';
+    el.title = 'Pas de connexion cloud — données sauvegardées localement';
   }
 }
 
 async function _testCloudConnection() {
   if (!_sbEnabled()) { _updateCloudBadge(); return; }
+  // Ne pas tenter si le navigateur sait qu'on est hors ligne
+  if (!navigator.onLine) { _cloudOnline = false; _updateCloudBadge(); return; }
+  const wasOnline = _cloudOnline;
   try {
     const r = await fetch(`${SB_URL}/rest/v1/${SB_TABLE}?limit=1`, {
-      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Accept': 'application/json' }
+      headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY, 'Accept': 'application/json' },
+      signal: AbortSignal.timeout(8000) // timeout 8s
     });
-    // 200 = OK, 406 = Not Acceptable mais serveur répond = online
-    _cloudOnline = r.ok || r.status === 406 || r.status === 401;
+    _cloudOnline = r.ok || r.status === 406 || r.status === 401 || r.status === 409;
   } catch(e) { _cloudOnline = false; }
+  // Logger seulement si le statut a changé
+  if (_cloudOnline !== wasOnline) {
+    console.log('[HACCP v8]', _cloudOnline ? '✅ Supabase connecté' : '⚠️ Supabase hors ligne');
+  }
   _updateCloudBadge();
-  console.log('[HACCP v8]', _cloudOnline ? '✅ Supabase connecté' : '⚠️ Supabase hors ligne');
 }
 
 // ── API publique ─────────────────────────────────────────────────────
@@ -1631,6 +1765,8 @@ async function doLogin() {
     document.getElementById('loginPage').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     await initApp();
+    // Activer le Wake Lock — empêche la tablette de s'éteindre
+    _requestWakeLock();
 
   } catch(err) {
     showErr('❌ Erreur inattendue : ' + err.message);
@@ -1640,6 +1776,8 @@ async function doLogin() {
 
 async function doLogout() {
   auditLog('LOGOUT','auth',{user:S.user.username});
+  // Libérer le Wake Lock à la déconnexion
+  _releaseWakeLock();
   S.user = null; S.hotel = null;
   document.getElementById('loginPage').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
@@ -2254,6 +2392,8 @@ async function renderProduits() {
   if (!S.hotel) { H('content','<div class="alert al-i"><span>Sélectionnez un établissement</span></div>'); return; }
   const prods=await ld('products',[]);
   const active=prods.filter(p=>p.status==='active');
+  const consumed=prods.filter(p=>p.status==='consumed').sort((a,b)=>b.consumedAt?.localeCompare(a.consumedAt||'')||0);
+
   const prodHtml=active.length?active.map((p,i)=>{
     const d=diff(p.expiryDate);
     return `<div style="display:flex;align-items:center;gap:12px;padding:12px;border:1.5px solid var(--n200);border-radius:10px;margin-bottom:7px;background:white;${d!==null&&d<0?'border-color:#fca5a5;background:var(--rbg)':d!==null&&d<=1?'border-color:#fde68a':''}">
@@ -2273,6 +2413,38 @@ async function renderProduits() {
     </div>`;
   }).join(''):'<div style="text-align:center;padding:24px;color:var(--n400)">Aucun produit ouvert</div>';
 
+  // ── Historique consommés ─────────────────────────────────────────
+  const histHtml = consumed.length ? consumed.map(p => {
+    const photos = p.photos && p.photos.length ? p.photos : [];
+    const statusBadge = p.expiryDate && p.consumedAt
+      ? (p.consumedAt.slice(0,10) <= p.expiryDate
+          ? '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">✅ Dans les délais</span>'
+          : '<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">⚠️ Périmé</span>')
+      : '';
+    return `<div style="border:1.5px solid var(--n200);border-radius:12px;margin-bottom:10px;background:white;overflow:hidden">
+      <div style="display:flex;align-items:center;gap:12px;padding:12px">
+        <!-- Photos de l'étiquette -->
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          ${photos.length
+            ? photos.map(ph=>`<img src="${ph}" onclick="openPV('${ph}')" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer;border:2px solid var(--n200)">`).join('')
+            : '<div style="width:60px;height:60px;background:var(--n100);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:22px">📦</div>'
+          }
+        </div>
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:13px;margin-bottom:3px">${escapeHtml(p.name)} ${statusBadge}</div>
+          <div style="font-size:11px;color:var(--n500)">${p.supplier?'🏭 '+escapeHtml(p.supplier)+' · ':''}${p.lot?'Lot: '+escapeHtml(p.lot):'—'}</div>
+          <div style="font-size:11px;color:var(--n400);font-family:var(--mono);margin-top:2px">
+            📅 Ouvert: ${fmtD(p.openDate)} · DLC: ${fmtD(p.expiryDate)}
+          </div>
+          <div style="font-size:11px;color:var(--g);font-family:var(--mono)">
+            ✓ Consommé: ${p.consumedAt?p.consumedAt.slice(0,16).replace('T',' '):'—'}
+            ${p.consumedBy?' · 👤 '+escapeHtml(p.consumedBy):''}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('') : '<div style="text-align:center;padding:32px;color:var(--n400)">Aucun produit consommé pour le moment</div>';
+
   const dlcGuide=await ld('dlc_guide',DEFAULT_DLC);
   const dlcRows=Object.keys(dlcGuide).map((k,i)=>`
     <tr><td><strong>${escapeHtml(k)}</strong></td><td><strong style="font-family:var(--mono);color:var(--g)">J+${dlcGuide[k]}</strong></td>
@@ -2280,11 +2452,19 @@ async function renderProduits() {
   ).join('');
 
   H('content', `
-    <div class="tabs"><button class="tab active" id="tab-prods" onclick="switchTab(this,'tp-prods')">📦 Ouverts (${active.length})</button><button class="tab" id="tab-dlcg" onclick="switchTab(this,'tp-dlcg')">📅 Guide DLC</button></div>
+    <div class="tabs">
+      <button class="tab active" id="tab-prods" onclick="switchTab(this,'tp-prods')">📦 Ouverts (${active.length})</button>
+      <button class="tab" id="tab-hist" onclick="switchTab(this,'tp-hist')">📋 Historique (${consumed.length})</button>
+      <button class="tab" id="tab-dlcg" onclick="switchTab(this,'tp-dlcg')">📅 Guide DLC</button>
+    </div>
     <div id="tp-prods">
       ${canCreateRecords()?'<button class="btn btn-g btn-sm" style="margin-bottom:12px" onclick="openProdModal()">+ Produit ouvert</button>':''}
       <input type="text" class="search-box" placeholder="Rechercher un produit…" oninput="filterProds(this)">
       <div id="prodList">${prodHtml}</div>
+    </div>
+    <div id="tp-hist" style="display:none">
+      <div style="margin-bottom:12px;font-size:12px;color:var(--n400)">📋 Historique complet — photos d'étiquettes conservées comme preuve</div>
+      ${histHtml}
     </div>
     <div id="tp-dlcg" style="display:none">
       <div class="card"><div class="card-hdr"><h3>📅 Guide DLC</h3>${canEdit()?'<button class="btn btn-g btn-sm" onclick="openDLCModal(null,null)">+ Ajouter</button>':''}</div>
@@ -2293,7 +2473,7 @@ async function renderProduits() {
   `);
 }
 function filterProds(input){const q=input.value.toLowerCase();document.querySelectorAll('#prodList > div').forEach(c=>{c.style.display=c.textContent.toLowerCase().includes(q)?'':'none';});}
-function switchTab(el,id){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');['tp-prods','tp-dlcg','tp-allgm','tp-allgg'].forEach(tid=>{const e=document.getElementById(tid);if(e)e.style.display=tid===id?'block':'none';});}
+function switchTab(el,id){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');['tp-prods','tp-hist','tp-dlcg','tp-allgm','tp-allgg'].forEach(tid=>{const e=document.getElementById(tid);if(e)e.style.display=tid===id?'block':'none';});}
 
 async function openProdModal() {
   if (!canCreateRecords()) { toast('❌ Non autorisé'); return; }
@@ -2340,7 +2520,18 @@ async function saveProd(){
   auditLog('CREATE','products',{name:nm,expiryDate:rec.expiryDate,intervenant:intName});
   _prodPh=[];cm('mProd');renderProduits();updateBadges();toast('✅ Produit enregistré par '+escapeHtml(intName));
 }
-async function consumeProd(id){const prods=await ld('products',[]);const p=prods.find(x=>x.id===id);if(p){auditLog('UPDATE','products',{status:'consumed'},p);p.status='consumed';p.consumedAt=ts();await sv('products',prods);renderProduits();updateBadges();}}
+async function consumeProd(id){
+  const prods=await ld('products',[]);
+  const p=prods.find(x=>x.id===id);
+  if(!p) return;
+  try { await requestPin('Confirmer la consommation de "'+p.name+'"'); } catch(e){ return; }
+  const consumedBy = S.user ? (S.user.name||S.user.username) : '—';
+  auditLog('UPDATE','products',{status:'consumed'},p);
+  p.status='consumed'; p.consumedAt=ts(); p.consumedBy=consumedBy;
+  await sv('products',prods);
+  renderProduits(); updateBadges();
+  toast('✅ "'+escapeHtml(p.name)+'" archivé dans l\'historique');
+}
 function openDLCModal(name,days){if(!canEdit()){toast('❌ Non autorisé');return;}S.editId=name;txt('mDLCTitle',name?'✏️ Modifier durabilité':'➕ Nouveau produit DLC');document.getElementById('dlcNm').value=name||'';document.getElementById('dlcNm').readOnly=!!name;document.getElementById('dlcDays').value=days||'';document.getElementById('dlcNotes').value='';txt('dlcSaveBtn',name?'Modifier':'Ajouter');openM('mDLC');}
 async function saveDLC(){if(!canEdit()){toast('❌ Non autorisé');return;}const nm=document.getElementById('dlcNm').value.trim(),d=parseInt(document.getElementById('dlcDays').value);if(!nm||isNaN(d)||d<=0){toast('Remplissez nom et durée (positive)');return;}const guide=await ld('dlc_guide',DEFAULT_DLC);const old=S.editId;if(old&&old!==nm)delete guide[old];guide[nm]=d;await sv('dlc_guide',guide);auditLog(old?'UPDATE':'CREATE','dlc_guide',{name:nm,days:d});cm('mDLC');renderProduits();toast('✅ DLC '+(S.editId?'modifiée':'ajoutée')+' : '+escapeHtml(nm)+' J+'+d);}
 async function delDLC(nm){if(!canEdit()){toast('❌ Non autorisé');return;}const ok=await confirmModal('Supprimer "'+nm+'" du guide DLC ?','Supprimer');if(!ok)return;const guide=await ld('dlc_guide',DEFAULT_DLC);auditLog('DELETE','dlc_guide',{name:nm});delete guide[nm];await sv('dlc_guide',guide);renderProduits();}
@@ -3081,6 +3272,61 @@ async function resetAccounts() {
   await buildLoginHotelSelect();
 }
 
+// ── WAKE LOCK — empêche l'écran de s'éteindre sur tablette ──────────
+// GitHub Pages bloque navigator.wakeLock via Permissions-Policy.
+// Fallback : video invisible en boucle (technique NoSleep éprouvée).
+let _wakeLock = null;
+let _noSleepVideo = null;
+let _wakeLockActive = false;
+
+async function _requestWakeLock() {
+  if (_wakeLockActive) return; // déjà actif — pas de double appel
+
+  // Tentative 1 : Wake Lock API native
+  if ('wakeLock' in navigator) {
+    try {
+      _wakeLock = await navigator.wakeLock.request('screen');
+      _wakeLockActive = true;
+      _wakeLock.addEventListener('release', () => { _wakeLock = null; _wakeLockActive = false; });
+      return; // succès — pas besoin du fallback
+    } catch(e) {
+      // Bloqué par Permissions-Policy (GitHub Pages) → fallback silencieux
+    }
+  }
+
+  // Fallback : vidéo invisible en boucle (fonctionne partout)
+  try {
+    if (!_noSleepVideo) {
+      _noSleepVideo = document.createElement('video');
+      _noSleepVideo.setAttribute('playsinline', '');
+      _noSleepVideo.setAttribute('muted', '');
+      _noSleepVideo.muted = true;
+      _noSleepVideo.loop = true;
+      _noSleepVideo.style.cssText = 'position:fixed;top:-1px;left:-1px;width:1px;height:1px;opacity:0;pointer-events:none;';
+      // Vidéo MP4 1×1 pixel encodée en base64 (1 frame noire ~800 octets)
+      _noSleepVideo.src = 'data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAAIZnJlZQAAA1BtZGF0AAACrAYF//+o3EXpvebZSLeWLNgg2SPu73gyNjQgLSBjb3JlIDE0MiByMjQ3OSBkZDc5YTYxIC0gSC4yNjQvTVBFRy00IEFWQyBjb2RlYyAtIENvcHlsZWZ0IDIwMDMtMjAxNCAtIGh0dHA6Ly93d3cudmlkZW9sYW4ub3JnL3gyNjQuaHRtbCAtIG9wdGlvbnM6IGNhYmFjPTEgcmVmPTMgZGVibG9jaz0xOjA6MCBhbmFseXNlPTB4MzoweDExMyBtZT1oZXggc3VibWU9NyBwc3k9MSBwc3lfcmQ9MS4wMDowLjAwIG1peGVkX3JlZj0xIG1lX3JhbmdlPTE2IGNocm9tYV9tZT0xIHRyZWxsaXM9MSA4eDhkY3Q9MSBjcW09MCBkZWFkem9uZT0yMSwxMSBmYXN0X3Bza2lwPTEgY2hyb21hX3FwX29mZnNldD0tMiBodHJlZXM9MSBiZnJhbWVzPTMgYl9weXJhbWlkPTIgYl9hZGFwdD0xIGJfYmlhcz0wIGRpcmVjdD0xIHdlaWdodGI9MSBvcGVuX2dvcD0wIHdlaWdodHA9MiBrZXlpbnQ9MjUwIGtleWludF9taW49MjUgc2NlbmVjdXQ9NDAgaW50cmFfcmVmcmVzaD0wIHJjX2xvb2thaGVhZD00MCByYz1jcmYgbWJ0cmVlPTEgY3JmPTI4LjAgcWNvbXA9MC42MCBxcG1pbj0wIHFwbWF4PTY5IHFwc3RlcD00IGlwX3JhdGlvPTEuNDAgYXE9MToxLjAwAIAAAAFZZYiEAD//8m+P5OXfBeLGOfKE3xkODvFZuBflHv/+VwJIta6lAAADAAADAAAFgSpr0JoVGAAAAwAAAwAABm9gmfABGSAAAC0AEACQACBIAAAOAAGhAAAOIAAGaAAACkAAAoQAAAKEAAAChAAACoQAAAqEAAAKhAAACoQAAAqEAAAChAAACoQAAAqEAAAKhAAACoQAAAqEAAAKhAAACoAAAA';
+      document.body.appendChild(_noSleepVideo);
+    }
+    await _noSleepVideo.play();
+    _wakeLockActive = true;
+  } catch(e) {
+    // Autoplay bloqué — pas grave, l'app fonctionne quand même
+  }
+}
+
+function _releaseWakeLock() {
+  _wakeLockActive = false;
+  if (_wakeLock) { try { _wakeLock.release(); } catch(e){} _wakeLock = null; }
+  if (_noSleepVideo) { try { _noSleepVideo.pause(); } catch(e){} }
+}
+
+// Réactiver uniquement si déconnecté (pas de doublon)
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState === 'visible' && !_wakeLockActive && S.user) {
+    await _requestWakeLock();
+  }
+});
+
 // ── MOBILE ────────────────────────────────────────────────────────────
 function toggleSb(){document.getElementById('sb').classList.toggle('open');document.getElementById('sbOv').classList.toggle('open');}
 function closeSb(){document.getElementById('sb').classList.remove('open');document.getElementById('sbOv').classList.remove('open');}
@@ -3167,6 +3413,24 @@ document.addEventListener('keydown', e => {
         console.log('[HACCP v8] Sync initiale cloud OK');
       } catch(e) { console.warn('[HACCP v8] Sync cloud init échouée:', e); }
     }
+    // Retry cloud — seulement si le réseau est disponible + backoff exponentiel
+    let _retryDelay = 2 * 60 * 1000; // 2 min
+    const _maxRetryDelay = 15 * 60 * 1000; // 15 min max
+    function _scheduleCloudRetry() {
+      setTimeout(async () => {
+        if (!_cloudOnline && _sbEnabled() && navigator.onLine) {
+          await _testCloudConnection();
+          if (_cloudOnline) {
+            _flushSyncQueue();
+            _retryDelay = 2 * 60 * 1000; // reset si succès
+          } else {
+            _retryDelay = Math.min(_retryDelay * 2, _maxRetryDelay);
+          }
+        }
+        if (!_cloudOnline) _scheduleCloudRetry(); // replanifier
+      }, _retryDelay);
+    }
+    if (!_cloudOnline) _scheduleCloudRetry();
   }, 2000);
 
   // ── 5. Events login ───────────────────────────────────────────────
